@@ -1,0 +1,63 @@
+#!/usr/bin/env ruby
+
+require 'find'
+
+wantedprogram = ARGF.argv
+
+def search_config_files(name)
+   if name.empty? || name[0].to_s.strip.empty?
+      return false
+   else
+      name = name[0]     
+      return name
+   end
+end
+
+def get_config_files(name)
+   configdir = ENV['XDG_CONFIG_HOME'] 
+   program = name[0]
+
+   pattern = File.join(configdir, "#{program}", "*")
+   matches = Dir.glob(pattern).select { |file| File.file?(file)}
+
+   if matches.empty? || name[0].to_s.strip.empty?
+      return false
+   else
+      return matches
+   end
+end
+
+def open_config_file(selection)
+   exec ("$EDITOR #{selection}")
+end
+
+while search_config_files(wantedprogram) == false do
+   print "Program name not provided.\nPlease enter the name of the program you would like to configure: "
+   wantedprogram.clear
+   wantedprogram.push $stdin.gets.chomp
+end
+
+while get_config_files(wantedprogram) == false do
+   puts "Not found, try again. "
+   wantedprogram.clear
+   wantedprogram.push $stdin.gets.chomp
+end
+
+listedfiles = get_config_files(wantedprogram)
+
+selection = 0
+
+if listedfiles.length > 1
+   listedfiles.each_with_index do |file, index|
+      index += 1
+      puts "#{index} - #{file}"
+   end
+   
+   puts "Multiple files, choose one: "
+   selection = $stdin.gets.chomp.to_i
+   selection -= 1
+end
+
+programpath = listedfiles[selection]
+
+open_config_file(programpath)
